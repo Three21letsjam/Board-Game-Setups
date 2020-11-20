@@ -1,189 +1,159 @@
-#rising sun setup
 import random
+import sys
 
-#assigns each player a unique clan
-def choose_clans(players):
-    clans = ['Koi (honor:1)(coins:5)', 'Lotus (honor:3)(coins:7)',
-             'Turtle (honor:4)(coins:6)', 'Dragonfly (honor:5)(coins:6)',
-             'Bonsai (honor:7)(coins:4)']
-    Dynasty = ['Sun (honor:2)(coins:7)','Moon (honor:8)(coins:4)']
-    Fox_clan = ['Fox (honor:6)(coins:5)']
 
-    print('Are you playing with the Dyasty invasion expansion? (yes/no)')
-    if input().lower().startswith('y'):
-        clans.extend(Dynasty)
+class Seasons:
+    SPRING = 'spring'
+    SUMMER = 'summer'
+    AUTUMN = 'autumn'
 
-    print('Are you playing with the kickstarter exclusive Fox clan? (yes/no)')
-    if input().lower().startswith('y'):
-        clans.extend(Fox_clan)
 
-    # makes user either add an expansion or remove a player if base game is attempted to be played with 6 players.
-    while len(players) > len(clans):
-        print('There are not enough clans for the given number of players. Would you like to add clans via expansion or remove a player? (add/remove)')
-        choice = input().lower()
+class Monsters:
+    monster_dict    =   {
+                            Seasons.SPRING: ['Earth Dragon', 'Jinmenju', 'Jorogumo', 'kotahi', 'Phoenix'],          
+                            Seasons.SUMMER: ['Fire Dragon', 'Jikininki', 'Koneko', 'Nure-Onna', 'Sunakake-Baba'],
+                            Seasons.AUTUMN: ['Daikaiju', 'Kitsune', 'Oni of Plagues', 'Sacred Warrior'],
+                        }
+    @staticmethod
+    def add_monsters(season):
+        try:
+            amount  = int(input(f'How many monsters would you like to add for {season}?'))
+            amount  = amount if 0 <= amount <= 5 else random.randint(0, 5)
+        except ValueError:
+            amount  = random.randint(0, 5)
+        finally:
+            ret     = set()
+            while len(ret) < amount:
+                ret.add(random.choice(Monsters.monster_dict[season]))
+            return ret
 
-        if choice.startswith('a'):
-            print('Would you like to add clans from the Dynasty Invasion expansion and/or the Fox Clan from the Daimyo Box? (Dynasty/Fox/both)')
-            choice_1 = input().lower()
-            if choice_1.startswith('d'):
-                clans.extend(Dynasty)
-                
-            elif choice_1.startswith('f'): 
-                clans.extend(Fox_clan)
-                
-            if choice_1.startswith('b'): 
-                clans.extend(Dynasty)
-                clans.extend(Fox_clan)
-                
+class Clan:
+    CORE    = 'core'
+    DYNASTY = 'dynasty'
+    KSE     = 'kse'
 
-        elif choice.startswith('r'):
-            print('Which player would you like to remove?')
-            remove_player = input().lower()
-            if remove_player in players:
-                players.remove(remove_player)
+    def __init__(self, expansion, name, honor, coins):
+        self.expansion  = expansion
+        self.name       = name
+        self.honor      = honor
+        self.coins      = coins
+        self.player     = ""
+
+    def __repr__(self):
+        return self.string()
+
+    def __str__(self):
+        return f"Set({self.expansion}) Clan({self.name}) Honor({self.honor}) Coins({self.coins}) Player({self.player})"
+
+
+def get_player_names():
+    name_list = []
+    print("Enter the name of each player on a new line")
+    while len(name_list) < 6:
+        name = input("name (or <ENTER> when done) >>> ")
+        if not name:
+            if len(name_list) < 3:
+                print("Min player count is 3")
+                continue
             else:
-                print('That player is not currently in the game.')
-                remove_player = input().lower()
-                
-            
-                    
-    selected_clans = [] #chooses x amount of clans to assign to players
-    for i in range(len(players)):
-        i = clans[random.randint(0,len(clans)-1)]
-        while i in selected_clans:
-            i = clans[random.randint(0,len(clans)-1)]
-        selected_clans.append(i)
+                break
+        name_list.append(name)
+    return name_list
 
+
+def choose_clans(player_list):
+    clans   =   [
+        Clan(Clan.CORE,    'Koi',       1, 5),
+        Clan(Clan.CORE,    'Lotus',     3, 7),
+        Clan(Clan.CORE,    'Turtle',    4, 6),
+        Clan(Clan.CORE,    'Dragonfly', 5, 6),
+        Clan(Clan.CORE,    'Bonsai',    7, 4),
+    ]
+
+    if input('Are you playing with the Dyasty invasion expansion? (y/n)').lower().startswith('y'):
+        clans.append(Clan(Clan.DYNASTY, 'Sun',       2, 7))
+        clans.append(Clan(Clan.DYNASTY, 'Moon',      8, 4))
+
+    if input('Are you playing with the kickstarter exclusive Fox clan? (y/n)').lower().startswith('y'):
+        clans.append(Clan(Clan.KSE,     'Fox',       6, 5))
+
+    if len(player_list) > len(clans):
+        print("Not enough clans for this player count, exiting")
+        sys.exit(0)
     
-        
-    for i in range(len(players)): #assigns selected clans to players
-        players[i] += ': ' + selected_clans[i]
-        print(players[i])
-      
+    for player in player_list:      
+        while True: # not efficient, but good enough
+            clan = random.choice(clans)
+            if not clan.player:
+                clan.player = player
+                print(clan)
+                break
+
+
 def choose_kami():
-    kami = ['Amaterasu', 'Tsukuyomi', 'Susano\'o', 'Hachiman',
-        'Ryujin', 'Fujin', 'Raijin'] 
+    kami            = ['Amaterasu', 'Tsukuyomi', 'Susano\'o', 'Hachiman', 'Ryujin', 'Fujin', 'Raijin'] 
+    selected_kami   = set()
+    while len(selected_kami) < 4:
+        k = random.choice(kami)
+        kami.remove(k)
+        selected_kami.add(k)
+    print('\n'.join(list(selected_kami)))
 
-    selected_kami = [] 
-    for i in range(4):
-        i = kami[random.randint(0,6)]
-        while i in selected_kami:
-            i = kami[random.randint(0,6)]
-        selected_kami.append(i)
-        print(i)
-    
+
 def choose_season_set():
     #Chooses a random season card set from the the base game. Allows user to add other sets depending on expansions owned.
     season_set = ['archway', 'teapot', 'horseman']
 
-    
-    print('You can add one or more additional season card sets to the pool of those chosen. (mountain, ship, tower)')
-    additional_sets = input().lower()
-    if 'mountain' in additional_sets:
+    if input('Add mountain set to list of available card sets (y/n)? ').startswith('y'):
         season_set.append('mountain')
-    if 'ship' in additional_sets:
+    if input('Add ship set to list of available card sets (y/n)? ').startswith('y'):
         season_set.append('ship')
-    if 'tower' in additional_sets:
+    if input('Add tower set to list of available card sets (y/n)? ').startswith('y'):
         season_set.append('tower')
+
+    print(f'The set played will be: {random.choice(season_set)}')
+
+
+def get_provinces(player_list):
+    provinces           = ['Kyushu', 'Shikoku', 'Nagato', 'Kansai', 'Kyoto', 'Edo', 'Oshu', 'Hokkaido']
+    selected_provinces  = set()
+    while len(selected_provinces) < (len(player_list) + 2):
+        p = random.choice(provinces)
+        provinces.remove(p)
+        selected_provinces.add(p) 
+    print('\n'.join(list(selected_provinces)))
+
     
-    chosen_set = season_set[random.randint(0,len(season_set)-1)]       
-    print('The set played will be: ' + chosen_set)
+def main():
+    random.seed()
 
-def get_provinces(players):
-    provinces = ['Kyushu', 'Shikoku', 'Nagato', 'Kansai', 'Kyoto',
-                 'Edo', 'Oshu', 'Hokkaido']
+    players = get_player_names()
+    print()
+    
+    choose_clans(players)
+    print()
 
-    selected_provinces = []
-    for i in range(len(players)+2):
-        j = provinces[random.randint(0,7)]
-        while j in selected_provinces:
-            j = provinces[random.randint(0,7)]
-        selected_provinces.append(j)
-        print('%d. ' % (i+1)+ j)
-                 
-def add_monsters(season = []):
-    if 'Earth Dragon' in season:
-        which_season = 'spring'
-    elif 'Fire Dragon' in season:
-        which_season = 'summer'
-    else:
-        which_season = 'autumn'
+    print('Place kami from left to right.')
+    choose_kami()
+    print()
 
-    print('How many monsters would you like to add for ' +which_season+'? Note: Not entering a number will cause the program to crash.')
-    amount = int(input())
-      
-    while not (amount >= 0 and amount <= len(season)):
-        print('Please enter a number from 0 to ' + str(len(season))+'.')
-        amount = int(input())
-          
-    selected_monsters = []
-    for i in range(amount):
-        i = season[random.randint(0,(len(season))-1)]
-        while i in selected_monsters:
-            i = season[random.randint(0,(len(season)) -1)]
-        selected_monsters.append(i)
+    choose_season_set()
+    print()
+
+    if input('Would you like to add kickstarter exclusive monsters to the game? (y/n)').lower().startswith('y'):
+        print(f"Add {Monsters.add_monsters(Seasons.SPRING)} to the {Seasons.SPRING} set")
+        print(f"Add {Monsters.add_monsters(Seasons.SUMMER)} to the {Seasons.SUMMER} set")
+        print(f"Add {Monsters.add_monsters(Seasons.AUTUMN)} to the {Seasons.AUTUMN} set")
+
+    #prints out contested province tiles for all 3 seasons
+    for season in [Seasons.SPRING, Seasons.SUMMER, Seasons.AUTUMN]:
         print()
-        print(i)
-    print()
-        
-
-# lists of Daimyo box/Monster pack monsters to pass to add_monsters
-spring = ['Earth Dragon', 'Jinmenju', 'Jorogumo', 'kotahi', 'Phoenix']            
-summer = ['Fire Dragon', 'Jikininki', 'Koneko', 'Nure-Onna', 'Sunakake-Baba']
-autumn = ['Daikaiju', 'Kitsune', 'Oni of Plagues', 'Sacred Warrior']
-
-#enters the number of players and rejects if less than 3 or more than 6
-print('Enter player names')
-
-players = input().lower().split()
-
-while len(players) < 3 or len(players) > 6:
-    print('Enter a valid number of players (3-6)')
-    players = input().split()
-
-#prints out clans, kami, and season card set
-
-choose_clans(players)
-print()
-
-print('Place kami from left to right.')
-choose_kami()
-print()
-
-choose_season_set()
-print()
-
-#Adds additional KS exclusive monsters 
-print('Would you like to add kickstarter exclusive monsters to the game? (yes/no)')
-if input().lower().startswith('y'):
-    add_monsters(spring)
-    add_monsters(summer)
-    add_monsters(autumn)
-
-#prints out contested province tiles for all 3 seasons
-for i in range(3):
-    if i == 2:
-        season = 'Autumn'
-    elif i == 1:
-        season = 'Summer'
-    else:
-        season = 'Spring'
-    print()
-    print('Press enter when ready for contested provinces in', season)
-    input()
-    print(season + '\'s provinces in order are:')
-    print()
-    get_provinces(players)
-    print()
-   
-    
+        input(f"Press enter when ready for contested provinces in {season}")
+        print(f"{season}'s provinces in order are:")
+        print()
+        get_provinces(players)
+        print()
 
 
-
-
-
-
-
-            
-
-
+if __name__ == "__main__":
+    main()
